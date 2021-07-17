@@ -11,8 +11,8 @@ class QuestionsCtl {
         }).limit(pageSize).skip(pageNum * pageSize) // skip从零开始 limit显示多少个
     }
     async checkQuestionExist (ctx, next) {
-        const question = await Question.findById(ctx.params.id)
-        console.log(question)
+        const question = await Question.findById(ctx.params.id).select('+questioner')
+        console.log('question', question)
         if (!question) {ctx.throw('404', '问题不存在')}
         ctx.state.question = question
         await next()
@@ -20,7 +20,7 @@ class QuestionsCtl {
     async findById (ctx) {
         const {fields = ''} = ctx.query
         const selectFields = fields.split(';').map(item => `+${item}`).join(' ')
-        const question = await Question.findById(ctx.params.id).select(selectFields).populate('questioner') // 过滤字段select('+business +headline')
+        const question = await Question.findById(ctx.params.id).select(selectFields).populate('questioner topics') // 过滤字段select('+business +headline')
         if (!question) {ctx.throw('404', '问题不存在')}
         ctx.body = question
     }
@@ -47,6 +47,7 @@ class QuestionsCtl {
             title: {type: 'string', required: false},
             description: {type: 'string', required: false}
         })
+        console.log('11', ctx.request.body)
         await ctx.state.question.update(ctx.request.body)
         ctx.body = ctx.state.question
     }

@@ -1,5 +1,6 @@
 const Topics = require('../models/topics')
 const User = require('../models/users')
+const Question = require('../models/questions')
 class TopicsCtl {
     async find (ctx) { 
         let {pageNum = 1, pageSize = 10} = ctx.query
@@ -42,6 +43,10 @@ class TopicsCtl {
     async listTopicsFollower (ctx) { // 获取话题下的粉丝
         const users = await User.find({followingTopics: ctx.params.id})
         ctx.body = users
+    }
+    async listQuestions (ctx) {
+        const questions = await Question.find({topics: ctx.params.id})
+        ctx.body = questions
     }
 }
 module.exports = new TopicsCtl

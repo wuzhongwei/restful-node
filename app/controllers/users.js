@@ -1,6 +1,7 @@
 const jsonwebtoken = require('jsonwebtoken')
 const User = require('../models/users')
 const Question = require('../models/questions')
+const Answer = require('../models/answers')
 const { secret } = require('../config')
 // 401 没有认证
 class Users {
@@ -81,13 +82,13 @@ class Users {
         const token = jsonwebtoken.sign({_id, name}, secret, {expiresIn: '1d'})
         ctx.body = {token}
     }
-    async listFollowing (ctx) {
+    async listFollowing (ctx) { // 查询某个用户关注的列表
         const user = await User.findById(ctx.params.id).select('+following').populate('following')
         if (!user) {ctx.throw(404, '用户不存在')}
         ctx.body = user.following
     }
     async listFollower (ctx) {
-        const users = await User.find({following: ctx.params.id})
+        const users = await User.find({following: ctx.params.id}) // 某个用户粉丝列表，
         ctx.body = users
     }
     async follow (ctx) {
@@ -136,6 +137,87 @@ class Users {
             questioner: ctx.params.id
         })
         ctx.body = questions
+    }
+    async listLikingAnswers (ctx) {
+        const user = await User.findById(ctx.params.id).select('+likingAnswers').populate('likingAnswers')
+        if (!user) {ctx.throw(404, '用户不存在')}
+        ctx.body = user.likingAnswers
+    }
+    async likeAnswer (ctx, next) {
+        const me = await User.findById(ctx.state.user._id).select('+likingAnswers') // 这是我的
+        
+        if (!me.likingAnswers.map(id => id.toString()).includes(ctx.params.id)) { 
+            me.likingAnswers.push(ctx.params.id) // 这是别人的id
+            me.save()
+            await Answer.findByIdAndUpdate(ctx.params.id, {
+                $inc: {voteCount: 1}
+            })
+        }
+        ctx.status = 204
+        await next()
+    }
+    async unlikeAnswer (ctx) {
+        const me = await User.findById(ctx.state.user._id).select('+likingAnswers') // 这是我的
+        const styArr = me.likingAnswers.map(id => id.toString())
+        const index = styArr.indexOf(ctx.params.id)
+        if (index > -1) { 
+            me.likingAnswers.splice(index, 1) // 这是别人的id
+            me.save()
+            await Answer.findByIdAndUpdate(ctx.params.id, {
+                $inc: {voteCount: -1}
+            })
+        }
+        ctx.status = 204
+    }
+
+    async listDislikingAnswers (ctx) {
+        const user = await User.findById(ctx.params.id).select('+dislikingAnswers').populate('dislikingAnswers')
+        if (!user) {ctx.throw(404, '用户不存在')}
+        ctx.body = user.dislikingAnswers
+    }
+    async dislikeAnswer (ctx, next) {
+        const me = await User.findById(ctx.state.user._id).select('+dislikingAnswers') // 这是我的
+        if (!me.dislikingAnswers.map(id => id.toString()).includes(ctx.params.id)) { 
+            me.dislikingAnswers.push(ctx.params.id) // 这是别人的id
+            me.save()
+        }
+        ctx.status = 204
+        await next()
+    }
+    async undislikeAnswer (ctx) {
+        const me = await User.findById(ctx.state.user._id).select('+dislikingAnswers') // 这是我的
+        const styArr = me.dislikingAnswers.map(id => id.toString())
+        const index = styArr.indexOf(ctx.params.id)
+        if (index > -1) { 
+            me.dislikingAnswers.splice(index, 1) // 这是别人的id
+            me.save()
+        }
+        ctx.status = 204
+    }
+
+    async listCollectingAnswers (ctx) {
+        const user = await User.findById(ctx.params.id).select('+collectingAnswers').populate('collectingAnswers')
+        if (!user) {ctx.throw(404, '用户不存在')}
+        ctx.body = user.collectingAnswers
+    }
+    async collectAnswer (ctx, next) {
+        const me = await User.findById(ctx.state.user._id).select('+collectingAnswers') // 这是我的
+        if (!me.collectingAnswers.map(id => id.toString()).includes(ctx.params.id)) { 
+            me.collectingAnswers.push(ctx.params.id) // 这是别人的id
+            me.save()
+        }
+        ctx.status = 204
+        await next()
+    }
+    async uncollectAnswer (ctx) {
+        const me = await User.findById(ctx.state.user._id).select('+collectingAnswers') // 这是我的
+        const styArr = me.collectingAnswers.map(id => id.toString())
+        const index = styArr.indexOf(ctx.params.id)
+        if (index > -1) { 
+            me.collectingAnswers.splice(index, 1) // 这是别人的id
+            me.save()
+        }
+        ctx.status = 204
     }
 }
 module.exports = new Users

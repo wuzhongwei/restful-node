@@ -1,26 +1,16 @@
 const Router = require('koa-router')
-const jsonwebtoken = require('jsonwebtoken')
+const jwt = require('koa-jwt')
 const usersRouter = new Router({prefix: '/topics'}) // 前缀
 const {
     find, create, findById, update, listTopicsFollower,
-    checkTopicsExist
+    checkTopicsExist, listQuestions
     } = require('../controllers/topics')
 const { secret } = require('../config')
-const auth = async (ctx, next) => {
-    const { authorization = '' } = ctx.request.header
-    const token = authorization.replace('Bearer ', '')
-    // try catch 处理500错误 鉴权
-    try {
-        const user = jsonwebtoken.verify(token, secret)
-        ctx.state.user = user
-    } catch (err) {
-        ctx.throw(401, err.message)
-    }
-    await next()
-}
+const auth = jwt({secret})
 usersRouter.get('/', find)
 usersRouter.post('/', auth, create)
 usersRouter.get('/:id', checkTopicsExist, findById)
 usersRouter.patch('/:id', auth, checkTopicsExist, update)
 usersRouter.get('/:id/followers', checkTopicsExist, listTopicsFollower)
+usersRouter.get('/:id/questions', checkTopicsExist, listQuestions)
 module.exports = usersRouter

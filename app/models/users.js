@@ -4,7 +4,7 @@ const {Schema, model} = mongoose
 const userSchema = new Schema({
     __v: {type: Number, select: false},
     name: {type: String, required: true},
-    password: {type: String, required: true, select: false},
+    password: {type: String, required: true, select: true},
     avatar_url: {type: String},
     gender: {type: String, enum: ['male', 'female'], default: 'male', required: true},
     headline: {type: String},
@@ -38,7 +38,7 @@ const userSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'User'
         }],
-        select: false
+        select: true
     },
     followingTopics: {
         type: [{
@@ -46,8 +46,29 @@ const userSchema = new Schema({
             ref: 'Topics'
         }],
         select: false
+    },
+    likingAnswers: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Answer'
+        }],
+        select: false
+    },
+    dislikingAnswers: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Answer'
+        }],
+        select: false
+    },
+    collectingAnswers: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Answer'
+        }],
+        select: false
     }
-})
+}, {timestamps: true})
 
 
 module.exports = model('User', userSchema)
