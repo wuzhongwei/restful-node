@@ -25,7 +25,6 @@ class AnswersCtl {
         const {fields = ''} = ctx.query
         const selectFields = fields.split(';').map(item => `+${item}`).join(' ')
         const answer = await Answer.findById(ctx.params.id).select(selectFields).populate('answerer') // 过滤字段select('+business +headline')
-        if (!answer) {ctx.throw('404', '问题不存在')}
         ctx.body = answer
     }
     async create (ctx) {

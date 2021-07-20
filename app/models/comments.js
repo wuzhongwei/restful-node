@@ -16,12 +16,11 @@ const commentSchema = new Schema({
         type: String,
         required: true
     },
-    rootCommentId: {
-        type: String,
-        required: true
+    rootCommentId: { // 二级评论参数
+        type: String
     },
     replyTo: {
-        type: Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId, //回复给哪个用户
         ref: 'User'
     }
 }, {timestamps: true})
